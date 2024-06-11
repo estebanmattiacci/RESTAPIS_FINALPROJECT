@@ -1,6 +1,7 @@
 package rest.MovieAPI;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import rest.Ticket;
@@ -8,6 +9,7 @@ import rest.Ticket;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Profile("movie")
@@ -50,6 +52,35 @@ public class MovieService {
     {
         movieTickets.remove(id);
     }
+
+    public Optional<Ticket> reserveTicket(String id) {
+        Optional<Ticket> optionalTicket = findByID(id);
+        if (optionalTicket.isEmpty()) {
+            return Optional.empty();
+        }
+        Ticket ticket = optionalTicket.get();
+        if ("Available".equals(ticket.getStatus())) {
+            ticket.setStatus("Reserved");
+            ticket.setReservedUntil(LocalDateTime.now().plusMinutes(5));
+            save(ticket);
+            return Optional.of(ticket);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Scheduled(fixedRate = 60000)
+    public void checkReservations() {
+        LocalDateTime now = LocalDateTime.now();
+        for (Ticket ticket : movieTickets.values()) {
+            if ("Reserved".equals(ticket.getStatus()) && ticket.getReservedUntil() != null && ticket.getReservedUntil().isBefore(now)) {
+                ticket.setStatus("Available");
+                ticket.setReservedUntil(null);
+                save(ticket);
+            }
+        }
+    }
+
 
 
 }

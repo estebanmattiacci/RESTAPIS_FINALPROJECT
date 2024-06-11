@@ -1,6 +1,7 @@
 package rest;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class Ticket {
@@ -10,6 +11,8 @@ public class Ticket {
     private String status;
     private LocalDate date;
     private String spot;
+
+    private LocalDateTime reservedUntil;
 
     // Getters and setters
     public String getId() {
@@ -50,6 +53,14 @@ public class Ticket {
 
     public void setSpot(String spot) {
         this.spot = spot;
+    }
+
+    public LocalDateTime getReservedUntil() {
+        return reservedUntil;
+    }
+
+    public void setReservedUntil(LocalDateTime reservedUntil) {
+        this.reservedUntil = reservedUntil;
     }
 
     @Override
