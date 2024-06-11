@@ -1,19 +1,20 @@
 package rest.FootballAPI;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import rest.Ticket;
 
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Profile("football")
 @Service
 public class FootballService {
-    private static final Map<String, Ticket> Tickets = new HashMap<>();
+    private static final Map<String, Ticket> footballTickets = new HashMap<>();
 
     @PostConstruct
     public void initData()
@@ -32,24 +33,50 @@ public class FootballService {
         if (ticket.getId() == null) {
             ticket.setId(UUID.randomUUID().toString());
         }
-        Tickets.put(ticket.getId(), ticket);
+        footballTickets.put(ticket.getId(), ticket);
         return ticket;
     }
 
     public Optional<Ticket> findByID(String id)
     {
-        return Optional.ofNullable(Tickets.get(id)) ;
+        return Optional.ofNullable(footballTickets.get(id)) ;
     }
 
     public List<Ticket> findAll()
     {
-        return new ArrayList<>(Tickets.values());
+        return new ArrayList<>(footballTickets.values());
     }
 
     public void deleteByID(String id)
     {
-        Tickets.remove(id);
+        footballTickets.remove(id);
     }
 
+    public Optional<Ticket> reserveTicket(String id) {
+        Optional<Ticket> optionalTicket = findByID(id);
+        if (optionalTicket.isEmpty()) {
+            return Optional.empty();
+        }
+        Ticket ticket = optionalTicket.get();
+        if ("Available".equals(ticket.getStatus())) {
+            ticket.setStatus("Reserved");
+            ticket.setReservedUntil(LocalDateTime.now().plusMinutes(5));
+            save(ticket);
+            return Optional.of(ticket);
+        } else {
+            return Optional.empty();
+        }
+    }
 
+    @Scheduled(fixedRate = 60000)
+    public void checkReservations() {
+        LocalDateTime now = LocalDateTime.now();
+        for (Ticket ticket : footballTickets.values()) {
+            if ("Reserved".equals(ticket.getStatus()) && ticket.getReservedUntil() != null && ticket.getReservedUntil().isBefore(now)) {
+                ticket.setStatus("Available");
+                ticket.setReservedUntil(null);
+                save(ticket);
+            }
+        }
+    }
 }
