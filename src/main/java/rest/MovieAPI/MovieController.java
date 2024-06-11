@@ -2,9 +2,12 @@ package rest.MovieAPI;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import rest.Ticket;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,28 +29,33 @@ public class MovieController {
     }
 
     @GetMapping
-    public List<EntityModel<MovieTicket>> getAllTickets() {
-        List<MovieTicket> tickets = ticketService.findAll();
-        return tickets.stream()
+    public  ResponseEntity<CollectionModel<EntityModel<Ticket>>> getAllTickets() {
+        List<EntityModel<Ticket>> tickets = ticketService.findAll().stream()
                 .map(ticket -> EntityModel.of(ticket,
                         linkTo(methodOn(MovieController.class).getTicketById(ticket.getId())).withSelfRel(),
-                        linkTo(methodOn(MovieController.class).getAllTickets()).withRel("tickets")))
+                        linkTo(methodOn(MovieController.class).getAllTickets()).withRel("tickets"),
+                        linkTo(methodOn(MovieController.class).placeOrder(ticket.getId())).withRel("order")))
                 .collect(Collectors.toList());
+
+        return ResponseEntity.ok(CollectionModel.of(tickets,
+                linkTo(methodOn(MovieController.class).getAllTickets()).withSelfRel()));
+
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EntityModel<MovieTicket>> getTicketById(@PathVariable String id) {
-        Optional<MovieTicket> ticket = ticketService.findByID(id);
+    public ResponseEntity<EntityModel<Ticket>> getTicketById(@PathVariable String id) {
+        Optional<Ticket> ticket = ticketService.findByID(id);
         return ticket.map(t -> ResponseEntity.ok(
-                        EntityModel.of(t,
-                                linkTo(methodOn(MovieController.class).getTicketById(t.getId())).withSelfRel(),
-                                linkTo(methodOn(MovieController.class).getAllTickets()).withRel("tickets"))))
+                EntityModel.of(t,
+                        linkTo(methodOn(MovieController.class).getTicketById(t.getId())).withSelfRel(),
+                        linkTo(methodOn(MovieController.class).getAllTickets()).withRel("tickets"),
+                        linkTo(methodOn(MovieController.class).placeOrder(t.getId())).withRel("order"))))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<EntityModel<MovieTicket>> createTicket(@RequestBody MovieTicket ticket) {
-        MovieTicket savedTicket = ticketService.save(ticket);
+    public ResponseEntity<EntityModel<Ticket>> createTicket(@RequestBody Ticket ticket) {
+        Ticket savedTicket = ticketService.save(ticket);
         return ResponseEntity.created(
                         linkTo(methodOn(MovieController.class).getTicketById(savedTicket.getId())).toUri())
                 .body(EntityModel.of(savedTicket,
@@ -56,13 +64,13 @@ public class MovieController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EntityModel<MovieTicket>> updateTicket(@PathVariable String id, @RequestBody MovieTicket ticket) {
-        Optional<MovieTicket> optionalTicket = ticketService.findByID(id);
+    public ResponseEntity<EntityModel<Ticket>> updateTicket(@PathVariable String id, @RequestBody Ticket ticket) {
+        Optional<Ticket> optionalTicket = ticketService.findByID(id);
         if (optionalTicket.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         ticket.setId(id);
-        MovieTicket updatedTicket = ticketService.save(ticket);
+        Ticket updatedTicket = ticketService.save(ticket);
         return ResponseEntity.ok(
                 EntityModel.of(updatedTicket,
                         linkTo(methodOn(MovieController.class).getTicketById(updatedTicket.getId())).withSelfRel(),
@@ -73,5 +81,21 @@ public class MovieController {
     public ResponseEntity<Void> deleteTicket(@PathVariable String id) {
         ticketService.deleteByID(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/order")
+    public ResponseEntity<EntityModel<Ticket>> placeOrder(@PathVariable String id) {
+        Optional<Ticket> optionalTicket = ticketService.findByID(id);
+        if (optionalTicket.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Ticket ticket = optionalTicket.get();
+        ticket.setStatus("Booked");
+        Ticket updatedTicket = ticketService.save(ticket);
+        return ResponseEntity.ok(
+                EntityModel.of(updatedTicket,
+                        linkTo(methodOn(MovieController.class).getTicketById(updatedTicket.getId())).withSelfRel(),
+                        linkTo(methodOn(MovieController.class).getAllTickets()).withRel("tickets"),
+                        linkTo(methodOn(MovieController.class).placeOrder(updatedTicket.getId())).withRel("order")));
     }
 }

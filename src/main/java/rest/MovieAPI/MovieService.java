@@ -3,6 +3,7 @@ package rest.MovieAPI;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import rest.Ticket;
 
 
 import javax.annotation.PostConstruct;
@@ -12,14 +13,14 @@ import java.util.*;
 @Profile("movie")
 @Service
 public class MovieService {
-    private static final Map<String, MovieTicket> movieTickets = new HashMap<>();
+    private static final Map<String, Ticket> movieTickets = new HashMap<>();
 
     @PostConstruct
     public void initData()
     {
         for (int i = 0; i < 5; i++) {
-            MovieTicket ticket = new MovieTicket();
-            ticket.setDescription("Movie " + (i + 1));
+            Ticket ticket = new Ticket();
+            ticket.setEvent("Movie " + (i + 1));
             ticket.setStatus("Available");
             ticket.setDate(LocalDate.now().plusDays(i));
             ticket.setSpot("Spot " + (i + 1));
@@ -27,7 +28,7 @@ public class MovieService {
         }
     }
 
-    public MovieTicket save(MovieTicket ticket) {
+    public Ticket save(Ticket ticket) {
         if (ticket.getId() == null) {
             ticket.setId(UUID.randomUUID().toString());
         }
@@ -35,12 +36,12 @@ public class MovieService {
         return ticket;
     }
 
-    public Optional<MovieTicket> findByID(String id)
+    public Optional<Ticket> findByID(String id)
     {
         return Optional.ofNullable(movieTickets.get(id)) ;
     }
 
-    public List<MovieTicket> findAll()
+    public List<Ticket> findAll()
     {
         return new ArrayList<>(movieTickets.values());
     }

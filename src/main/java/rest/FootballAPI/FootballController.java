@@ -2,12 +2,15 @@ package rest.FootballAPI;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import rest.Ticket;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -26,28 +29,33 @@ public class FootballController {
     }
 
     @GetMapping
-    public List<EntityModel<FootballTicket>> getAllTickets() {
-        List<FootballTicket> tickets = ticketService.findAll();
-        return tickets.stream()
+    public ResponseEntity<CollectionModel<EntityModel<Ticket>>> getAllTickets() {
+        List<EntityModel<Ticket>> tickets = ticketService.findAll().stream()
                 .map(ticket -> EntityModel.of(ticket,
                         linkTo(methodOn(FootballController.class).getTicketById(ticket.getId())).withSelfRel(),
-                        linkTo(methodOn(FootballController.class).getAllTickets()).withRel("tickets")))
+                        linkTo(methodOn(FootballController.class).getAllTickets()).withRel("tickets"),
+                        linkTo(methodOn(FootballController.class).placeOrder(ticket.getId())).withRel("order")))
                 .collect(Collectors.toList());
+
+        return ResponseEntity.ok(CollectionModel.of(tickets,
+                linkTo(methodOn(FootballController.class).getAllTickets()).withSelfRel()));
+        
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EntityModel<FootballTicket>> getTicketById(@PathVariable String id) {
-        Optional<FootballTicket> ticket = ticketService.findByID(id);
+    public ResponseEntity<EntityModel<Ticket>> getTicketById(@PathVariable String id) {
+        Optional<Ticket> ticket = ticketService.findByID(id);
         return ticket.map(t -> ResponseEntity.ok(
                         EntityModel.of(t,
                                 linkTo(methodOn(FootballController.class).getTicketById(t.getId())).withSelfRel(),
-                                linkTo(methodOn(FootballController.class).getAllTickets()).withRel("tickets"))))
+                                linkTo(methodOn(FootballController.class).getAllTickets()).withRel("tickets"),
+                                linkTo(methodOn(FootballController.class).placeOrder(t.getId())).withRel("order"))))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<EntityModel<FootballTicket>> createTicket(@RequestBody FootballTicket ticket) {
-        FootballTicket savedTicket = ticketService.save(ticket);
+    public ResponseEntity<EntityModel<Ticket>> createTicket(@RequestBody Ticket ticket) {
+        Ticket savedTicket = ticketService.save(ticket);
         return ResponseEntity.created(
                         linkTo(methodOn(FootballController.class).getTicketById(savedTicket.getId())).toUri())
                 .body(EntityModel.of(savedTicket,
@@ -56,13 +64,13 @@ public class FootballController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EntityModel<FootballTicket>> updateTicket(@PathVariable String id, @RequestBody FootballTicket ticket) {
-        Optional<FootballTicket> optionalTicket = ticketService.findByID(id);
+    public ResponseEntity<EntityModel<Ticket>> updateTicket(@PathVariable String id, @RequestBody Ticket ticket) {
+        Optional<Ticket> optionalTicket = ticketService.findByID(id);
         if (optionalTicket.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         ticket.setId(id);
-        FootballTicket updatedTicket = ticketService.save(ticket);
+        Ticket updatedTicket = ticketService.save(ticket);
         return ResponseEntity.ok(
                 EntityModel.of(updatedTicket,
                         linkTo(methodOn(FootballController.class).getTicketById(updatedTicket.getId())).withSelfRel(),
@@ -73,5 +81,21 @@ public class FootballController {
     public ResponseEntity<Void> deleteTicket(@PathVariable String id) {
         ticketService.deleteByID(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/order")
+    public ResponseEntity<EntityModel<Ticket>> placeOrder(@PathVariable String id) {
+        Optional<Ticket> optionalTicket = ticketService.findByID(id);
+        if (optionalTicket.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Ticket ticket = optionalTicket.get();
+        ticket.setStatus("Booked");
+        Ticket updatedTicket = ticketService.save(ticket);
+        return ResponseEntity.ok(
+                EntityModel.of(updatedTicket,
+                        linkTo(methodOn(FootballController.class).getTicketById(updatedTicket.getId())).withSelfRel(),
+                        linkTo(methodOn(FootballController.class).getAllTickets()).withRel("tickets"),
+                        linkTo(methodOn(FootballController.class).placeOrder(updatedTicket.getId())).withRel("order")));
     }
 }

@@ -1,17 +1,12 @@
-package rest.FootballAPI;
-
-
-import org.springframework.context.annotation.Profile;
+package rest;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
-
-@Profile("football")
-public class FootballTicket {
+public class Ticket {
 
     private String id;
-    private String description;
+    private String event;
     private String status;
     private LocalDate date;
     private String spot;
@@ -25,12 +20,12 @@ public class FootballTicket {
         this.id = id;
     }
 
-    public String getDescription() {
-        return description;
+    public String getEvent() {
+        return event;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setEvent(String event) {
+        this.event = event;
     }
 
     public String getStatus() {
@@ -61,9 +56,9 @@ public class FootballTicket {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        FootballTicket ticket = (FootballTicket) o;
+        Ticket ticket = (Ticket) o;
         return Objects.equals(id, ticket.id) &&
-                Objects.equals(description, ticket.description) &&
+                Objects.equals(event, ticket.event) &&
                 Objects.equals(status, ticket.status) &&
                 Objects.equals(date, ticket.date) &&
                 Objects.equals(spot, ticket.spot);
@@ -71,7 +66,7 @@ public class FootballTicket {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, description, status, date, spot);
+        return Objects.hash(id, event, status, date, spot);
     }
-}
 
+}

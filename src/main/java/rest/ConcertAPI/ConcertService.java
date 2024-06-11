@@ -3,6 +3,7 @@ package rest.ConcertAPI;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import rest.Ticket;
 
 
 import javax.annotation.PostConstruct;
@@ -12,14 +13,14 @@ import java.util.*;
 @Profile("concert")
 @Service
 public class ConcertService {
-    private static final Map<String, ConcertTicket> concertTickets = new HashMap<>();
+    private static final Map<String, Ticket> concertTickets = new HashMap<>();
 
     @PostConstruct
     public void initData()
     {
         for (int i = 0; i < 5; i++) {
-            ConcertTicket ticket = new ConcertTicket();
-            ticket.setDescription("Concert " + (i + 1));
+            Ticket ticket = new Ticket();
+            ticket.setEvent("Concert " + (i + 1));
             ticket.setStatus("Available");
             ticket.setDate(LocalDate.now().plusDays(i));
             ticket.setSpot("Spot " + (i + 1));
@@ -27,7 +28,7 @@ public class ConcertService {
         }
     }
 
-    public ConcertTicket save(ConcertTicket ticket) {
+    public Ticket save(Ticket ticket) {
         if (ticket.getId() == null) {
             ticket.setId(UUID.randomUUID().toString());
         }
@@ -35,12 +36,12 @@ public class ConcertService {
         return ticket;
     }
 
-    public Optional<ConcertTicket> findByID(String id)
+    public Optional<Ticket> findByID(String id)
     {
         return Optional.ofNullable(concertTickets.get(id)) ;
     }
 
-    public List<ConcertTicket> findAll()
+    public List<Ticket> findAll()
     {
         return new ArrayList<>(concertTickets.values());
     }

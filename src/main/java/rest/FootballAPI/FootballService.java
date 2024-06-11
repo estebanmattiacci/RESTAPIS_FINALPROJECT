@@ -3,6 +3,7 @@ package rest.FootballAPI;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import rest.Ticket;
 
 
 import javax.annotation.PostConstruct;
@@ -12,14 +13,14 @@ import java.util.*;
 @Profile("football")
 @Service
 public class FootballService {
-    private static final Map<String, FootballTicket> footballTickets = new HashMap<>();
+    private static final Map<String, Ticket> Tickets = new HashMap<>();
 
     @PostConstruct
     public void initData()
     {
         for (int i = 0; i < 5; i++) {
-            FootballTicket ticket = new FootballTicket();
-            ticket.setDescription("Football Match  " + (i + 1));
+            Ticket ticket = new Ticket();
+            ticket.setEvent("Football Match  " + (i + 1));
             ticket.setStatus("Available");
             ticket.setDate(LocalDate.now().plusDays(i));
             ticket.setSpot("Spot " + (i + 1));
@@ -27,27 +28,27 @@ public class FootballService {
         }
     }
 
-    public FootballTicket save(FootballTicket ticket) {
+    public Ticket save(Ticket ticket) {
         if (ticket.getId() == null) {
             ticket.setId(UUID.randomUUID().toString());
         }
-        footballTickets.put(ticket.getId(), ticket);
+        Tickets.put(ticket.getId(), ticket);
         return ticket;
     }
 
-    public Optional<FootballTicket> findByID(String id)
+    public Optional<Ticket> findByID(String id)
     {
-        return Optional.ofNullable(footballTickets.get(id)) ;
+        return Optional.ofNullable(Tickets.get(id)) ;
     }
 
-    public List<FootballTicket> findAll()
+    public List<Ticket> findAll()
     {
-        return new ArrayList<>(footballTickets.values());
+        return new ArrayList<>(Tickets.values());
     }
 
     public void deleteByID(String id)
     {
-        footballTickets.remove(id);
+        Tickets.remove(id);
     }
 
 
