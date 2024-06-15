@@ -6,7 +6,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import rest.ConcertAPI.ConcertController;
+
 import rest.Ticket;
 
 import java.util.List;
@@ -34,18 +34,18 @@ public class FootballController {
         List<EntityModel<Ticket>> tickets = ticketService.findAll().stream()
                 .map(ticket -> {
                     EntityModel<Ticket> ticketModel = EntityModel.of(ticket,
-                            linkTo(methodOn(ConcertController.class).getTicketById(ticket.getId())).withSelfRel(),
-                            linkTo(methodOn(ConcertController.class).getAllTickets()).withRel("tickets"),
-                            linkTo(methodOn(ConcertController.class).placeOrder(ticket.getId())).withRel("order"));
+                            linkTo(methodOn(FootballController.class).getTicketById(ticket.getId())).withSelfRel(),
+                            linkTo(methodOn(FootballController.class).getAllTickets()).withRel("tickets"),
+                            linkTo(methodOn(FootballController.class).placeOrder(ticket.getId())).withRel("order"));
                     if ("Available".equals(ticket.getStatus())) {
-                        ticketModel.add(linkTo(methodOn(ConcertController.class).reserveTicket(ticket.getId())).withRel("reserve"));
+                        ticketModel.add(linkTo(methodOn(FootballController.class).reserveTicket(ticket.getId())).withRel("reserve"));
                     }
                     return ticketModel;
                 })
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(CollectionModel.of(tickets,
-                linkTo(methodOn(ConcertController.class).getAllTickets()).withSelfRel()));
+                linkTo(methodOn(FootballController.class).getAllTickets()).withSelfRel()));
     }
 
     @GetMapping("/{id}")
@@ -53,11 +53,11 @@ public class FootballController {
         Optional<Ticket> ticket = ticketService.findByID(id);
         return ticket.map(t -> {
             EntityModel<Ticket> ticketModel = EntityModel.of(t,
-                    linkTo(methodOn(ConcertController.class).getTicketById(t.getId())).withSelfRel(),
-                    linkTo(methodOn(ConcertController.class).getAllTickets()).withRel("tickets"),
-                    linkTo(methodOn(ConcertController.class).placeOrder(t.getId())).withRel("order"));
+                    linkTo(methodOn(FootballController.class).getTicketById(t.getId())).withSelfRel(),
+                    linkTo(methodOn(FootballController.class).getAllTickets()).withRel("tickets"),
+                    linkTo(methodOn(FootballController.class).placeOrder(t.getId())).withRel("order"));
             if ("Available".equals(t.getStatus())) {
-                ticketModel.add(linkTo(methodOn(ConcertController.class).reserveTicket(t.getId())).withRel("reserve"));
+                ticketModel.add(linkTo(methodOn(FootballController.class).reserveTicket(t.getId())).withRel("reserve"));
             }
             return ResponseEntity.ok(ticketModel);
         }).orElse(ResponseEntity.notFound().build());
@@ -82,10 +82,10 @@ public class FootballController {
         ticket.setId(id);
         Ticket updatedTicket = ticketService.save(ticket);
         EntityModel<Ticket> ticketModel = EntityModel.of(updatedTicket,
-                linkTo(methodOn(ConcertController.class).getTicketById(updatedTicket.getId())).withSelfRel(),
-                linkTo(methodOn(ConcertController.class).getAllTickets()).withRel("tickets"));
+                linkTo(methodOn(FootballController.class).getTicketById(updatedTicket.getId())).withSelfRel(),
+                linkTo(methodOn(FootballController.class).getAllTickets()).withRel("tickets"));
         if ("Available".equals(updatedTicket.getStatus())) {
-            ticketModel.add(linkTo(methodOn(ConcertController.class).reserveTicket(updatedTicket.getId())).withRel("reserve"));
+            ticketModel.add(linkTo(methodOn(FootballController.class).reserveTicket(updatedTicket.getId())).withRel("reserve"));
         }
         return ResponseEntity.ok(ticketModel);
     }
@@ -120,12 +120,30 @@ public class FootballController {
         }
         Ticket ticket = optionalTicket.get();
         EntityModel<Ticket> ticketModel = EntityModel.of(ticket,
-                linkTo(methodOn(ConcertController.class).getTicketById(ticket.getId())).withSelfRel(),
-                linkTo(methodOn(ConcertController.class).getAllTickets()).withRel("tickets"),
-                linkTo(methodOn(ConcertController.class).placeOrder(ticket.getId())).withRel("order"));
+                linkTo(methodOn(FootballController.class).getTicketById(ticket.getId())).withSelfRel(),
+                linkTo(methodOn(FootballController.class).getAllTickets()).withRel("tickets"),
+                linkTo(methodOn(FootballController.class).placeOrder(ticket.getId())).withRel("order"));
         if ("Available".equals(ticket.getStatus())) {
-            ticketModel.add(linkTo(methodOn(ConcertController.class).reserveTicket(ticket.getId())).withRel("reserve"));
+            ticketModel.add(linkTo(methodOn(FootballController.class).reserveTicket(ticket.getId())).withRel("reserve"));
         }
         return ResponseEntity.ok(ticketModel);
+    }
+
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<EntityModel<Ticket>> cancelOrder(@PathVariable String id) {
+        Optional<Ticket> optionalTicket = ticketService.findByID(id);
+        if (optionalTicket.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Ticket ticket = optionalTicket.get();
+        ticket.setStatus("Available");
+        ticket.setReservedUntil(null);
+        Ticket updatedTicket = ticketService.save(ticket);
+        return ResponseEntity.ok(
+                EntityModel.of(updatedTicket,
+                        linkTo(methodOn(FootballController.class).getTicketById(updatedTicket.getId())).withSelfRel(),
+                        linkTo(methodOn(FootballController.class).getAllTickets()).withRel("tickets"),
+                        linkTo(methodOn(FootballController.class).placeOrder(updatedTicket.getId())).withRel("order")));
     }
 }

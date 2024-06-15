@@ -5,6 +5,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import rest.Ticket;
+import rest.ConcertAPI.ConcertService.*;
 
 
 import javax.annotation.PostConstruct;
@@ -12,20 +13,35 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static rest.ConcertAPI.ConcertService.generateRandomTicket;
+
 @Profile("movie")
 @Service
 public class MovieService {
     private static final Map<String, Ticket> movieTickets = new HashMap<>();
 
+    private static final List<String> MOVIE_NAMES = Arrays.asList(
+            "Oppenheimer at Kinepolis Bruxelles",
+            "Avatar 2 at AMC Empire 25",
+            "Spider-Man: No Way Home at Regal LA Live",
+            "The Batman at Odeon Leicester Square",
+            "Dune at Alamo Drafthouse",
+            "Top Gun: Maverick at Vue West End",
+            "Black Panther: Wakanda Forever at ArcLight Hollywood",
+            "No Time to Die at Cineworld Glasgow",
+            "Shang-Chi at The Light Leeds",
+            "Eternals at Picturehouse Central",
+            "The Matrix Resurrections at Showcase Cinema de Lux",
+            "Jurassic World Dominion at Everyman Cinema",
+            "The Suicide Squad at Cineworld Dublin",
+            "Mission: Impossible 7 at IMAX Melbourne",
+            "Doctor Strange 2 at Odeon Manchester"
+    );
     @PostConstruct
     public void initData()
     {
         for (int i = 0; i < 5; i++) {
-            Ticket ticket = new Ticket();
-            ticket.setEvent("Movie " + (i + 1));
-            ticket.setStatus("Available");
-            ticket.setDate(LocalDate.now().plusDays(i));
-            ticket.setSpot("Spot " + (i + 1));
+            Ticket ticket = generateRandomTicket(i, MOVIE_NAMES, "Movies");
             save(ticket);
         }
     }

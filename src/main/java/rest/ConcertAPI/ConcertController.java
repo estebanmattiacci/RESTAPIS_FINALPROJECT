@@ -133,4 +133,21 @@ public class ConcertController {
         }
         return ResponseEntity.ok(ticketModel);
     }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<EntityModel<Ticket>> cancelOrder(@PathVariable String id) {
+        Optional<Ticket> optionalTicket = ticketService.findByID(id);
+        if (optionalTicket.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Ticket ticket = optionalTicket.get();
+        ticket.setStatus("Available");
+        ticket.setReservedUntil(null);
+        Ticket updatedTicket = ticketService.save(ticket);
+        return ResponseEntity.ok(
+                EntityModel.of(updatedTicket,
+                        linkTo(methodOn(ConcertController.class).getTicketById(updatedTicket.getId())).withSelfRel(),
+                        linkTo(methodOn(ConcertController.class).getAllTickets()).withRel("tickets"),
+                        linkTo(methodOn(ConcertController.class).placeOrder(updatedTicket.getId())).withRel("order")));
+    }
 }

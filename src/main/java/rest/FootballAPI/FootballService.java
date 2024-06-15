@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import rest.Ticket;
+import rest.ConcertAPI.ConcertService;
 
 
 import javax.annotation.PostConstruct;
@@ -11,20 +12,35 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static rest.ConcertAPI.ConcertService.generateRandomTicket;
+
 @Profile("football")
 @Service
 public class FootballService {
     private static final Map<String, Ticket> footballTickets = new HashMap<>();
 
+    private static final List<String> FOOTBALL_MATCHES = Arrays.asList(
+            "Manchester United vs Real Madrid",
+            "Barcelona vs Bayern Munich",
+            "Liverpool vs Paris Saint-Germain",
+            "Chelsea vs Juventus",
+            "Manchester City vs Inter Milan",
+            "Arsenal vs AC Milan",
+            "Bayern Munich vs Barcelona",
+            "Real Madrid vs Liverpool",
+            "Juventus vs Manchester United",
+            "Paris Saint-Germain vs Chelsea",
+            "Inter Milan vs Arsenal",
+            "Manchester City vs Barcelona",
+            "Liverpool vs Juventus",
+            "AC Milan vs Bayern Munich",
+            "Real Madrid vs Manchester City"
+    );
     @PostConstruct
     public void initData()
     {
         for (int i = 0; i < 5; i++) {
-            Ticket ticket = new Ticket();
-            ticket.setEvent("Football Match  " + (i + 1));
-            ticket.setStatus("Available");
-            ticket.setDate(LocalDate.now().plusDays(i));
-            ticket.setSpot("Spot " + (i + 1));
+            Ticket ticket = generateRandomTicket(i,FOOTBALL_MATCHES, "Football");
             save(ticket);
         }
     }

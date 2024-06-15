@@ -12,6 +12,8 @@ public class Ticket {
     private LocalDate date;
     private String spot;
 
+    private String type;
+
     private LocalDateTime reservedUntil;
 
     // Getters and setters
@@ -55,6 +57,13 @@ public class Ticket {
         this.spot = spot;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
     public LocalDateTime getReservedUntil() {
         return reservedUntil;
     }

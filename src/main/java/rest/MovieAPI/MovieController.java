@@ -34,18 +34,18 @@ public class MovieController {
         List<EntityModel<Ticket>> tickets = ticketService.findAll().stream()
                 .map(ticket -> {
                     EntityModel<Ticket> ticketModel = EntityModel.of(ticket,
-                            linkTo(methodOn(ConcertController.class).getTicketById(ticket.getId())).withSelfRel(),
-                            linkTo(methodOn(ConcertController.class).getAllTickets()).withRel("tickets"),
-                            linkTo(methodOn(ConcertController.class).placeOrder(ticket.getId())).withRel("order"));
+                            linkTo(methodOn(MovieController.class).getTicketById(ticket.getId())).withSelfRel(),
+                            linkTo(methodOn(MovieController.class).getAllTickets()).withRel("tickets"),
+                            linkTo(methodOn(MovieController.class).placeOrder(ticket.getId())).withRel("order"));
                     if ("Available".equals(ticket.getStatus())) {
-                        ticketModel.add(linkTo(methodOn(ConcertController.class).reserveTicket(ticket.getId())).withRel("reserve"));
+                        ticketModel.add(linkTo(methodOn(MovieController.class).reserveTicket(ticket.getId())).withRel("reserve"));
                     }
                     return ticketModel;
                 })
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(CollectionModel.of(tickets,
-                linkTo(methodOn(ConcertController.class).getAllTickets()).withSelfRel()));
+                linkTo(methodOn(MovieController.class).getAllTickets()).withSelfRel()));
     }
 
     @GetMapping("/{id}")
@@ -53,11 +53,11 @@ public class MovieController {
         Optional<Ticket> ticket = ticketService.findByID(id);
         return ticket.map(t -> {
             EntityModel<Ticket> ticketModel = EntityModel.of(t,
-                    linkTo(methodOn(ConcertController.class).getTicketById(t.getId())).withSelfRel(),
-                    linkTo(methodOn(ConcertController.class).getAllTickets()).withRel("tickets"),
-                    linkTo(methodOn(ConcertController.class).placeOrder(t.getId())).withRel("order"));
+                    linkTo(methodOn(MovieController.class).getTicketById(t.getId())).withSelfRel(),
+                    linkTo(methodOn(MovieController.class).getAllTickets()).withRel("tickets"),
+                    linkTo(methodOn(MovieController.class).placeOrder(t.getId())).withRel("order"));
             if ("Available".equals(t.getStatus())) {
-                ticketModel.add(linkTo(methodOn(ConcertController.class).reserveTicket(t.getId())).withRel("reserve"));
+                ticketModel.add(linkTo(methodOn(MovieController.class).reserveTicket(t.getId())).withRel("reserve"));
             }
             return ResponseEntity.ok(ticketModel);
         }).orElse(ResponseEntity.notFound().build());
@@ -82,10 +82,10 @@ public class MovieController {
         ticket.setId(id);
         Ticket updatedTicket = ticketService.save(ticket);
         EntityModel<Ticket> ticketModel = EntityModel.of(updatedTicket,
-                linkTo(methodOn(ConcertController.class).getTicketById(updatedTicket.getId())).withSelfRel(),
-                linkTo(methodOn(ConcertController.class).getAllTickets()).withRel("tickets"));
+                linkTo(methodOn(MovieController.class).getTicketById(updatedTicket.getId())).withSelfRel(),
+                linkTo(methodOn(MovieController.class).getAllTickets()).withRel("tickets"));
         if ("Available".equals(updatedTicket.getStatus())) {
-            ticketModel.add(linkTo(methodOn(ConcertController.class).reserveTicket(updatedTicket.getId())).withRel("reserve"));
+            ticketModel.add(linkTo(methodOn(MovieController.class).reserveTicket(updatedTicket.getId())).withRel("reserve"));
         }
         return ResponseEntity.ok(ticketModel);
     }
@@ -121,12 +121,29 @@ public class MovieController {
         }
         Ticket ticket = optionalTicket.get();
         EntityModel<Ticket> ticketModel = EntityModel.of(ticket,
-                linkTo(methodOn(ConcertController.class).getTicketById(ticket.getId())).withSelfRel(),
-                linkTo(methodOn(ConcertController.class).getAllTickets()).withRel("tickets"),
-                linkTo(methodOn(ConcertController.class).placeOrder(ticket.getId())).withRel("order"));
+                linkTo(methodOn(MovieController.class).getTicketById(ticket.getId())).withSelfRel(),
+                linkTo(methodOn(MovieController.class).getAllTickets()).withRel("tickets"),
+                linkTo(methodOn(MovieController.class).placeOrder(ticket.getId())).withRel("order"));
         if ("Available".equals(ticket.getStatus())) {
-            ticketModel.add(linkTo(methodOn(ConcertController.class).reserveTicket(ticket.getId())).withRel("reserve"));
+            ticketModel.add(linkTo(methodOn(MovieController.class).reserveTicket(ticket.getId())).withRel("reserve"));
         }
         return ResponseEntity.ok(ticketModel);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<EntityModel<Ticket>> cancelOrder(@PathVariable String id) {
+        Optional<Ticket> optionalTicket = ticketService.findByID(id);
+        if (optionalTicket.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Ticket ticket = optionalTicket.get();
+        ticket.setStatus("Available");
+        ticket.setReservedUntil(null);
+        Ticket updatedTicket = ticketService.save(ticket);
+        return ResponseEntity.ok(
+                EntityModel.of(updatedTicket,
+                        linkTo(methodOn(MovieController.class).getTicketById(updatedTicket.getId())).withSelfRel(),
+                        linkTo(methodOn(MovieController.class).getAllTickets()).withRel("tickets"),
+                        linkTo(methodOn(MovieController.class).placeOrder(updatedTicket.getId())).withRel("order")));
     }
 }
