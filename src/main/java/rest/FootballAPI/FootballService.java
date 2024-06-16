@@ -39,7 +39,7 @@ public class FootballService {
     @PostConstruct
     public void initData()
     {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 15; i++) {
             Ticket ticket = generateRandomTicket(i,FOOTBALL_MATCHES, "Football");
             save(ticket);
         }

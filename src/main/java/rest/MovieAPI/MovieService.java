@@ -40,7 +40,7 @@ public class MovieService {
     @PostConstruct
     public void initData()
     {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 15; i++) {
             Ticket ticket = generateRandomTicket(i, MOVIE_NAMES, "Movies");
             save(ticket);
         }
